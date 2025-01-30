@@ -1,0 +1,22 @@
+﻿@model List<PhotoShare.Models.Photo>
+
+@{
+    // A razor block of code
+
+    ViewData["Title"] = "Home Page";
+}
+
+
+<div class="masonry-grid">
+    @foreach (var item in Model)
+    {
+        string imageUrl = Url.Content("/photos/" + item.ImageFilename);
+
+        <div class="masonry-grid-item">
+            <a href="@Url.Action("PhotoDetails", "Home", new { id = item.PhotoId })">
+                <img src="@imageUrl" class="img-fluid" alt="@item.Description" />
+            </a>
+        </div>
+    }
+</div>
+

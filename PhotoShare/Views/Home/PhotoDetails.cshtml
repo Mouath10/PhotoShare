@@ -1,0 +1,199 @@
+﻿@model PhotoShare.Models.Photo
+
+@{
+    ViewData["Title"] = "Photo Details";
+    var photoKey = "photo-comments-" + Model.PhotoId; // Unique key for comments
+    var likeKey = "photo-likes-" + Model.PhotoId; // Unique key for likes
+}
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card shadow-lg">
+                <div class="card-body position-relative">
+                    <!-- Image with Description Overlay -->
+                    <div class="image-container">
+                        <img src="@(string.IsNullOrEmpty(Model.ImageFilename) ? "https://source.unsplash.com/random/800x600" : Url.Content("/photos/" + Model.ImageFilename))"
+                             alt="@Model.Description" class="img-fluid rounded" />
+                        <div class="image-overlay">
+                            <h4 class="text-white">@Model.Description</h4>
+                        </div>
+                    </div>
+
+                    <!-- Photo Details Table -->
+                    <table class="table mt-3">
+                        <tr>
+                            <td><strong>@Html.DisplayNameFor(model => model.PhotoId):</strong></td>
+                            <td>@Html.DisplayFor(model => model.PhotoId)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>@Html.DisplayNameFor(model => model.CreatedAt):</strong></td>
+                            <td>@Html.DisplayFor(model => model.CreatedAt)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Tags:</strong></td>
+                            <td>
+                                @if (Model.Tags != null && Model.Tags.Any())
+                                {
+                                    foreach (var tag in Model.Tags)
+                                    {
+                                        <span class="badge bg-primary me-1">@tag</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span class="text-muted">No tags available</span>
+                                }
+                            </td>
+                        </tr>
+                    </table>
+
+                    <!-- Like Button & Count -->
+                    <div class="d-flex align-items-center mt-3">
+                        <button class="btn btn-danger me-2" onclick="toggleLike()">
+                            <i id="likeIcon" class="fa-regular fa-heart"></i>
+                        </button>
+                        <span id="likeCount" class="fw-bold">0</span> Likes
+                    </div>
+
+                    <!-- Share and Download Buttons -->
+                    <div class="d-flex justify-content-between mt-3">
+                        <a href="@Url.Content("/photos/" + Model.ImageFilename)" class="btn btn-success" download>
+                            <i class="fa-solid fa-download"></i> Download
+                        </a>
+                        <button class="btn btn-primary" onclick="sharePhoto()">
+                            <i class="fa-solid fa-share"></i> Share
+                        </button>
+                    </div>
+
+                    <!-- Comment Section -->
+                    <div class="mt-4">
+                        <h4>Comments</h4>
+                        <textarea class="form-control" id="commentText" placeholder="Write a comment..." rows="3"></textarea>
+                        <button class="btn btn-info mt-2" onclick="submitComment()">Submit</button>
+
+                        <ul class="list-group mt-3" id="commentList">
+                            <!-- Comments will be loaded here -->
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CSS for Overlay -->
+<style>
+    .image-container {
+        position: relative;
+        display: inline-block;
+        width: 100%;
+    }
+
+        .image-container img {
+            width: 100%;
+            border-radius: 10px;
+        }
+
+    .image-overlay {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        background: rgba(0, 0, 0, 0.6);
+        color: white;
+        text-align: center;
+        padding: 10px;
+        font-size: 18px;
+        font-weight: bold;
+        border-bottom-left-radius: 10px;
+        border-bottom-right-radius: 10px;
+    }
+
+    .btn-danger.active i {
+        color: red;
+    }
+</style>
+
+<!-- JavaScript for Likes, Comments & Share -->
+<script>
+    const photoKey = "@photoKey"; // Unique key for comments
+    const likeKey = "@likeKey"; // Unique key for likes
+
+    function loadComments() {
+        const commentList = document.getElementById("commentList");
+        const savedComments = JSON.parse(localStorage.getItem(photoKey)) || [];
+
+        commentList.innerHTML = ""; // Clear list before adding
+        savedComments.forEach(comment => {
+            const newComment = document.createElement("li");
+            newComment.className = "list-group-item";
+            newComment.textContent = comment;
+            commentList.appendChild(newComment);
+        });
+    }
+
+    function submitComment() {
+        const commentText = document.getElementById("commentText").value.trim();
+        if (commentText !== "") {
+            const commentList = document.getElementById("commentList");
+            const newComment = document.createElement("li");
+            newComment.className = "list-group-item";
+            newComment.textContent = commentText;
+            commentList.appendChild(newComment);
+
+            let savedComments = JSON.parse(localStorage.getItem(photoKey)) || [];
+            savedComments.push(commentText);
+            localStorage.setItem(photoKey, JSON.stringify(savedComments));
+
+            document.getElementById("commentText").value = "";
+        }
+    }
+
+    function sharePhoto() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Photo link copied to clipboard!');
+        });
+    }
+
+    function loadLikes() {
+        const likeCount = document.getElementById("likeCount");
+        const likeIcon = document.getElementById("likeIcon");
+        let likes = parseInt(localStorage.getItem(likeKey)) || 0;
+
+        likeCount.textContent = likes;
+
+        if (localStorage.getItem(likeKey + "-liked") === "true") {
+            likeIcon.classList.remove("fa-regular");
+            likeIcon.classList.add("fa-solid", "text-danger");
+        }
+    }
+
+    function toggleLike() {
+        const likeCount = document.getElementById("likeCount");
+        const likeIcon = document.getElementById("likeIcon");
+        let likes = parseInt(localStorage.getItem(likeKey)) || 0;
+        let isLiked = localStorage.getItem(likeKey + "-liked") === "true";
+
+        if (isLiked) {
+            likes = Math.max(0, likes - 1);
+            localStorage.setItem(likeKey + "-liked", "false");
+            likeIcon.classList.remove("fa-solid", "text-danger");
+            likeIcon.classList.add("fa-regular");
+        } else {
+            likes += 1;
+            localStorage.setItem(likeKey + "-liked", "true");
+            likeIcon.classList.remove("fa-regular");
+            likeIcon.classList.add("fa-solid", "text-danger");
+        }
+
+        localStorage.setItem(likeKey, likes);
+        likeCount.textContent = likes;
+    }
+
+    document.addEventListener("DOMContentLoaded", function () {
+        loadComments();
+        loadLikes();
+    });
+</script>
