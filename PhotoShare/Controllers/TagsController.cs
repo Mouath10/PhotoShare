@@ -30,7 +30,7 @@ namespace PhotoShare.Controllers
         // POST: Tags/Edit/5
 
         //
-        // CREATE
+        // CREATE 
         //
 
         // GET: Tags/Create

@@ -2,63 +2,43 @@
 
 @{
     ViewData["Title"] = "Photo Details";
-    var photoKey = "photo-comments-" + Model.PhotoId; // Unique key for comments
-    var likeKey = "photo-likes-" + Model.PhotoId; // Unique key for likes
+    var photoKey = $"photo-comments-{Model.PhotoId}"; // Unique key for comments
+    var likeKey = $"photo-likes-{Model.PhotoId}"; // Unique key for likes
 }
 
-<div class="container mt-4">
+<div class="container mt-5">
     <div class="row">
         <div class="col-md-8 offset-md-2">
             <div class="card shadow-lg">
-                <div class="card-body position-relative">
-                    <!-- Image with Description Overlay -->
-                    <div class="image-container">
-                        <img src="@(string.IsNullOrEmpty(Model.ImageFilename) ? "https://source.unsplash.com/random/800x600" : Url.Content("/photos/" + Model.ImageFilename))"
-                             alt="@Model.Description" class="img-fluid rounded" />
-                        <div class="image-overlay">
-                            <h4 class="text-white">@Model.Description</h4>
+                <div class="card-body">
+                    <!-- Image with Overlay -->
+                    <div class="position-relative">
+                        <img src="@Url.Content(string.IsNullOrEmpty(Model.ImageFilename) ? "https://source.unsplash.com/random/800x600" : $"/photos/{Model.ImageFilename}")"
+                             alt="@Model.Description" class="img-fluid rounded w-100" />
+                        <div class="position-absolute bottom-0 w-100 bg-dark text-white text-center py-2 opacity-75">
+                            <h4>@Model.Description</h4>
                         </div>
                     </div>
 
-                    <!-- Photo Details Table -->
-                    <table class="table mt-3">
-                        <tr>
-                            <td><strong>@Html.DisplayNameFor(model => model.PhotoId):</strong></td>
-                            <td>@Html.DisplayFor(model => model.PhotoId)</td>
-                        </tr>
-                        <tr>
-                            <td><strong>@Html.DisplayNameFor(model => model.CreatedAt):</strong></td>
-                            <td>@Html.DisplayFor(model => model.CreatedAt)</td>
-                        </tr>
+                    <!-- Photo Details -->
+                    <table class="table mt-4">
+                        <tr><td><strong>ID:</strong></td><td>@Model.PhotoId</td></tr>
+                        <tr><td><strong>Created:</strong></td><td>@Model.CreatedAt</td></tr>
                         <tr>
                             <td><strong>Tags:</strong></td>
-                            <td>
-                                @if (Model.Tags != null && Model.Tags.Any())
-                                {
-                                    foreach (var tag in Model.Tags)
-                                    {
-                                        <span class="badge bg-primary me-1">@tag</span>
-                                    }
-                                }
-                                else
-                                {
-                                    <span class="text-muted">No tags available</span>
-                                }
-                            </td>
+                            <td>@(Model.Tags?.Any() ?? false ? string.Join(", ", Model.Tags.Select(t => t.Name)) : "No tags available")</td>
                         </tr>
                     </table>
 
-                    <!-- Like Button & Count -->
-                    <div class="d-flex align-items-center mt-3">
+                    <!-- Like & Actions -->
+                    <div class="d-flex align-items-center mt-4">
                         <button class="btn btn-danger me-2" onclick="toggleLike()">
                             <i id="likeIcon" class="fa-regular fa-heart"></i>
                         </button>
                         <span id="likeCount" class="fw-bold">0</span> Likes
                     </div>
-
-                    <!-- Share and Download Buttons -->
-                    <div class="d-flex justify-content-between mt-3">
-                        <a href="@Url.Content("/photos/" + Model.ImageFilename)" class="btn btn-success" download>
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="@Url.Content($"/photos/{Model.ImageFilename}")" class="btn btn-success" download>
                             <i class="fa-solid fa-download"></i> Download
                         </a>
                         <button class="btn btn-primary" onclick="sharePhoto()">
@@ -66,15 +46,12 @@
                         </button>
                     </div>
 
-                    <!-- Comment Section -->
-                    <div class="mt-4">
+                    <!-- Comments -->
+                    <div class="mt-5">
                         <h4>Comments</h4>
                         <textarea class="form-control" id="commentText" placeholder="Write a comment..." rows="3"></textarea>
-                        <button class="btn btn-info mt-2" onclick="submitComment()">Submit</button>
-
-                        <ul class="list-group mt-3" id="commentList">
-                            <!-- Comments will be loaded here -->
-                        </ul>
+                        <button class="btn btn-info mt-3" onclick="submitComment()">Submit</button>
+                        <ul class="list-group mt-3" id="commentList"></ul>
                     </div>
                 </div>
             </div>
@@ -82,118 +59,105 @@
     </div>
 </div>
 
-<!-- CSS for Overlay -->
+<!-- Styles -->
 <style>
-    .image-container {
-        position: relative;
-        display: inline-block;
-        width: 100%;
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
-        .image-container img {
-            width: 100%;
-            border-radius: 10px;
+    .container {
+        max-width: 1200px;
+        margin: auto;
+        padding: 20px;
+    }
+
+    .card {
+        border: none;
+        border-radius: 10px;
+        transition: transform 0.3s;
+    }
+
+        .card:hover {
+            transform: translateY(-5px);
         }
 
-    .image-overlay {
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        background: rgba(0, 0, 0, 0.6);
-        color: white;
-        text-align: center;
-        padding: 10px;
-        font-size: 18px;
-        font-weight: bold;
-        border-bottom-left-radius: 10px;
-        border-bottom-right-radius: 10px;
+    .btn {
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 600;
+        transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .btn-danger.active i {
-        color: red;
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+    .btn-danger:hover {
+        background-color: #c82333;
+    }
+
+    .btn-success:hover {
+        background-color: #218838;
+    }
+
+    .btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .btn-info:hover {
+        background-color: #138496;
+    }
+
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #eee;
+        padding: 15px;
     }
 </style>
 
-<!-- JavaScript for Likes, Comments & Share -->
+<!-- JavaScript -->
 <script>
-    const photoKey = "@photoKey"; // Unique key for comments
-    const likeKey = "@likeKey"; // Unique key for likes
+    const photoKey = "@photoKey", likeKey = "@likeKey";
+
+    function updateUI(id, value, liked = false) {
+        document.getElementById(id).textContent = value;
+        const icon = document.getElementById("likeIcon");
+        icon.className = liked ? "fa-solid fa-heart text-danger" : "fa-regular fa-heart";
+    }
 
     function loadComments() {
-        const commentList = document.getElementById("commentList");
-        const savedComments = JSON.parse(localStorage.getItem(photoKey)) || [];
-
-        commentList.innerHTML = ""; // Clear list before adding
-        savedComments.forEach(comment => {
-            const newComment = document.createElement("li");
-            newComment.className = "list-group-item";
-            newComment.textContent = comment;
-            commentList.appendChild(newComment);
-        });
+        const comments = JSON.parse(localStorage.getItem(photoKey)) || [];
+        document.getElementById("commentList").innerHTML = comments.map(c => `<li class="list-group-item">${c}</li>`).join('');
     }
 
     function submitComment() {
-        const commentText = document.getElementById("commentText").value.trim();
-        if (commentText !== "") {
-            const commentList = document.getElementById("commentList");
-            const newComment = document.createElement("li");
-            newComment.className = "list-group-item";
-            newComment.textContent = commentText;
-            commentList.appendChild(newComment);
-
-            let savedComments = JSON.parse(localStorage.getItem(photoKey)) || [];
-            savedComments.push(commentText);
-            localStorage.setItem(photoKey, JSON.stringify(savedComments));
-
-            document.getElementById("commentText").value = "";
-        }
-    }
-
-    function sharePhoto() {
-        const url = window.location.href;
-        navigator.clipboard.writeText(url).then(() => {
-            alert('Photo link copied to clipboard!');
-        });
-    }
-
-    function loadLikes() {
-        const likeCount = document.getElementById("likeCount");
-        const likeIcon = document.getElementById("likeIcon");
-        let likes = parseInt(localStorage.getItem(likeKey)) || 0;
-
-        likeCount.textContent = likes;
-
-        if (localStorage.getItem(likeKey + "-liked") === "true") {
-            likeIcon.classList.remove("fa-regular");
-            likeIcon.classList.add("fa-solid", "text-danger");
-        }
+        const input = document.getElementById("commentText");
+        if (!input.value.trim()) return;
+        const comments = JSON.parse(localStorage.getItem(photoKey)) || [];
+        comments.push(input.value.trim());
+        localStorage.setItem(photoKey, JSON.stringify(comments));
+        input.value = "";
+        loadComments();
     }
 
     function toggleLike() {
-        const likeCount = document.getElementById("likeCount");
-        const likeIcon = document.getElementById("likeIcon");
         let likes = parseInt(localStorage.getItem(likeKey)) || 0;
-        let isLiked = localStorage.getItem(likeKey + "-liked") === "true";
+        let liked = localStorage.getItem(likeKey + "-liked") === "true";
 
-        if (isLiked) {
-            likes = Math.max(0, likes - 1);
-            localStorage.setItem(likeKey + "-liked", "false");
-            likeIcon.classList.remove("fa-solid", "text-danger");
-            likeIcon.classList.add("fa-regular");
-        } else {
-            likes += 1;
-            localStorage.setItem(likeKey + "-liked", "true");
-            likeIcon.classList.remove("fa-regular");
-            likeIcon.classList.add("fa-solid", "text-danger");
-        }
-
+        liked ? likes-- : likes++;
         localStorage.setItem(likeKey, likes);
-        likeCount.textContent = likes;
+        localStorage.setItem(likeKey + "-liked", !liked);
+        updateUI("likeCount", likes, !liked);
     }
 
-    document.addEventListener("DOMContentLoaded", function () {
+    function sharePhoto() {
+        navigator.clipboard.writeText(window.location.href).then(() => alert('Photo link copied!'));
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        updateUI("likeCount", localStorage.getItem(likeKey) || 0, localStorage.getItem(likeKey + "-liked") === "true");
         loadComments();
-        loadLikes();
     });
 </script>
